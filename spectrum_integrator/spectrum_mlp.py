@@ -5,6 +5,7 @@ import jax.numpy as jnp
 from jax import jit, vmap, random
 import flax.linen as nn
 from flax.serialization import from_bytes
+import pkg_resources
 
 
 c: jnp.float32 = jnp.float32(299792.458)
