@@ -41,10 +41,50 @@ The resulting function can be passed to the SpectrumIntegrator constructor.
 
 ### Spherical harmonics generator
 
-Many abundance maps can also be described by a spherical harmonic function. To generate an abundance map with dimensions [x_length, y_length] for a spherical harmonic, use the following function.
+Many abundance maps can also be described by a spherical harmonic function. To generate an abundance map with dimensions [x_length, y_length] for a spherical harmonic, use the following function. Mind you that the resulting values are rescaled to the (0, 1) range.
 
 #### spherical_harmonic
 - **m**: _jnp.float32_ - m mode
 - **n**: _jnp.float64_ - n mode
 - **x_length**: _jnp.float64_ - length of the x coordinates dimension
 - **y_length**: _jnp.float64_ - length of the y coordinates dimension
+
+## Example
+
+To use the SpectrumIntegrator, provide a spectra model first - this can of course be the product of spectra_prediction_function. (You can write your custom one, though!)
+
+```python
+ps: Callable[[jnp.array, jnp.array], jnp.array] = spectra_prediction_function(wave_min=6064.5, wave_max=6067.0, wave_points=100)
+```
+
+Then use it in the SpectrumIntegrator constructor. We are going to model the spectra for iron and add a spherical harmonic as the abundance map.
+
+```python
+si: SpectrumIntegrator = SpectrumIntegrator(interpolation_dims=(50, 50),
+                                            meshgrid_dims=(128, 256),
+                                            predict_spectra_fn=ps,
+                                            rotation=jnp.float32(45.),
+                                            inclination=jnp.pi/2,
+                                            teff=jnp.float32(7469.74),
+                                            logg=jnp.float32(3.95),
+                                            vmic=jnp.float32(1.41),
+                                            me=jnp.float32(-0.4),
+                                            element='Fe',
+                                            abundance_map=spherical_harmonic(1, 1, 50, 50))
+```
+
+(Refer to the flax documentation when in doubt!)
+
+```python
+params = si.init(random.PRNGKey(0), jnp.ones((1,)))
+```
+
+Simulate the spectrum for rotation phase 0.:
+```python
+spectrum = si.apply(params, 0.)
+```
+
+Example for 20 spectra for 20 rotation phases:
+```python
+spectra = lax.map(lambda p: si.apply(params, p), jnp.linspace(0, 2*jnp.pi, 20))
+```
