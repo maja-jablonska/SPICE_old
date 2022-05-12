@@ -1,5 +1,5 @@
 from operator import indexOf
-from typing import List, Sequence
+from typing import Callable, Sequence
 from functools import partial
 import jax.numpy as jnp
 from jax import jit, vmap, random
@@ -158,3 +158,25 @@ def predict_spectrum_with_rot_velocity(params: jnp.array,
     return predict_spectrum(params, log_wave+jnp.log10(1+rot_vel/c))
 
 predict_spectra_with_rot_velocity = jit(vmap(predict_spectrum_with_rot_velocity, in_axes=(0, None, 0)))
+
+def spectra_prediction_function(wave_min: jnp.float32,
+                                wave_max: jnp.float32,
+                                wave_points: jnp.float32) -> Callable[[jnp.array, jnp.array], jnp.array]:
+    """Generate a spectrum prediction function for the given wavelength range.
+
+    Args:
+        wave_min (jnp.float32): minimum wavelength in angstroms
+        wave_max (jnp.float32): maximum wavelength in angstroms
+        wave_points (jnp.float32): number of points in the wavelength range
+
+    Returns:
+        Callable[[jnp.array, jnp.array], jnp.array]: function taking array of parameters and array of rotations (for points on the stellar disk) and returning corresponding
+        spectrum fluxes
+    """
+    log_wave = jnp.linspace(jnp.log10(wave_min), jnp.log10(wave_max), wave_points)
+    
+    @jit
+    def predict_spectra(parameters: jnp.array, rotation_map: jnp.array) -> jnp.array:
+        return (1-predict_spectra_with_rot_velocity(parameters, log_wave, rotation_map)).reshape((-1, wave_points))
+    
+    return predict_spectra

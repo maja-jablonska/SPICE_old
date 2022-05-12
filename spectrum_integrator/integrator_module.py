@@ -9,7 +9,7 @@ class SpectrumIntegrator(nn.Module):
     interpolation_dims: Tuple[int, int]
     meshgrid_dims: Tuple[int, int]
     
-    predict_spectra_fn: Callable
+    predict_spectra_fn: Callable[[jnp.array, jnp.array], jnp.array]
 
     rotation: jnp.float32
     inclination: jnp.float32
