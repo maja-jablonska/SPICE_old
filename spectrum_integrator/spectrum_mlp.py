@@ -65,7 +65,7 @@ def scale_spectra_parameters(log_teff: jnp.float32,
 
 
 @partial(jit, static_argnums=(5,))
-def generate_spectrum_overabundance_params(log_teff: jnp.float32,
+def generate_spectrum_overabundance_params(teff: jnp.float32,
                                            logg: jnp.float32,
                                            vmic: jnp.float32,
                                            me: jnp.float32,
@@ -74,7 +74,7 @@ def generate_spectrum_overabundance_params(log_teff: jnp.float32,
     """Generate spectrum parameters for assumed spectrum model and single element overabundance
 
     Args:
-        log_teff (jnp.float32): logarythmic effective temperature [3.845098, 3.929419]
+        log_teff (jnp.float32): effective temperature in K [7000, 8500]
         logg (jnp.float32): log g [3.5, 5.0]
         vmic (jnp.float32): microturbulences velocity [0.0, 10.0]
         me (jnp.float32): metallicity [-1.0, 0.0]
@@ -91,7 +91,7 @@ def generate_spectrum_overabundance_params(log_teff: jnp.float32,
     
     input_params = jnp.zeros((len(OVERABUNDANCES,)))
 
-    return jnp.array(scale_spectra_parameters(log_teff, logg, vmic, me, *input_params.at[element_index].set(abundance)))
+    return jnp.array(scale_spectra_parameters(jnp.log10(teff), logg, vmic, me, *input_params.at[element_index].set(abundance)))
 
 
 generate_spectrum_overabundance_params_vec = vmap(generate_spectrum_overabundance_params, in_axes=(None, None, None, None, 0, None))
@@ -99,7 +99,6 @@ generate_spectrum_overabundance_params_vec = vmap(generate_spectrum_overabundanc
 
 def frequency_encoding(x, min_period, max_period, dimension):
     periods = jnp.logspace(jnp.log10(min_period), jnp.log10(max_period), num=dimension)
-    
     y = jnp.sin(2*jnp.pi/periods*x)
     return y
 
@@ -107,14 +106,25 @@ class SpectrumMLP(nn.Module):
     features: Sequence[int]
 
     @nn.compact
-    def __call__(self, p, w):
-        enc_w = frequency_encoding(w, min_period=1e-7, max_period=0.05, dimension=64)
-        x = jnp.hstack([p, enc_w])
+    def __call__(self, parameters: jnp.array, log_wave: jnp.float32) -> jnp.float32:
+        """Calculate flux at given log wavelength for given stellar parameters and abundances.
+
+        Args:
+            parameters (jnp.array): parameters of (log_teff, logg, vmic, metallicity, a_Mn, a_Fe,
+                a_Si, a_Ca, a_C, a_N, a_O, a_Hg)
+            log_wave (jnp.float32): logarithm of wavelength in angstroms [3.77085, 3.79934]
+
+        Returns:
+            jnp.float32: normalized flux [0-1]
+        """
+        enc_w = frequency_encoding(log_wave, min_period=1e-7, max_period=0.05, dimension=64)
+        x = jnp.hstack([parameters, enc_w])
         for feat in self.features[:-1]:
             x = nn.gelu(nn.Dense(feat)(x))
         x = 1.0-nn.sigmoid(nn.Dense(self.features[-1])(x))
         return x
     
+
 architecture = tuple([512, 512, 512, 1])
 model = SpectrumMLP(architecture)
 params = model.init(random.PRNGKey(0), jnp.ones(12,), jnp.ones(1,))
@@ -134,6 +144,17 @@ predict_spectra = jit(vmap(predict_spectrum, in_axes=(0, None), out_axes=0))
 def predict_spectrum_with_rot_velocity(params: jnp.array,
                                        log_wave: jnp.array,
                                        rot_vel: jnp.float32) -> jnp.array:
+    """Calculate spectrum applying the velocity transformation.
+
+    Args:
+        params (jnp.array): parameters of (log_teff, logg, vmic, metallicity, a_Mn, a_Fe,
+                a_Si, a_Ca, a_C, a_N, a_O, a_Hg)
+        log_wave (jnp.array): logarithms of wavelengths in angstroms [3.77085, 3.79934]
+        rot_vel (jnp.float32): velocity in km/s
+
+    Returns:
+        jnp.array: spectrum fluxes redshifted/blueshifted according to the rotational velocity
+    """
     return predict_spectrum(params, log_wave+jnp.log10(1+rot_vel/c))
 
 predict_spectra_with_rot_velocity = jit(vmap(predict_spectrum_with_rot_velocity, in_axes=(0, None, 0)))

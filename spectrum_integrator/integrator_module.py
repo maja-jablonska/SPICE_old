@@ -24,7 +24,15 @@ class SpectrumIntegrator(nn.Module):
     abundance_map: jnp.array
     
     @nn.compact
-    def __call__(self, phi):
+    def __call__(self, phi: jnp.float32) -> jnp.array:
+        """Simulate spectrum for given rotation phase phi.
+
+        Args:
+            phi (jnp.float32): phase in radians [0, 2pi]
+
+        Returns:
+            jnp.array: spectrum fluxes
+        """
 
         phiv, thetav, dtheta, dphi = generate_meshgrid(*self.interpolation_dims)
         integration_weights = jnp.nan_to_num(get_integration_weights(phiv, dtheta, dphi)).flatten().reshape((-1, 1))
