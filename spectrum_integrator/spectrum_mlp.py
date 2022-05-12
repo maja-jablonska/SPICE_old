@@ -1,5 +1,5 @@
 from operator import indexOf
-from typing import Callable, Sequence
+from typing import Callable, List, Sequence
 from functools import partial
 import jax.numpy as jnp
 from jax import jit, vmap, random

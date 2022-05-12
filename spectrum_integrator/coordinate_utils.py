@@ -47,11 +47,11 @@ def rescale(trans_phi: jnp.array,
     return trans
 
 
-def interpolate2d(x: jnp.float64,
-                  y: jnp.float64,
+def interpolate2d(x: jnp.float32,
+                  y: jnp.float32,
                   values_map: jnp.array,
                   phi_points: int = 128,
-                  theta_points: int = 256) -> jnp.float64:
+                  theta_points: int = 256) -> jnp.float32:
     x_floor = jnp.clip(jnp.array(jnp.floor(x), int), 0, phi_points-2)
     y_floor = jnp.clip(jnp.array(jnp.floor(y), int), 0, theta_points-2)
     

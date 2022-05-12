@@ -5,17 +5,17 @@ from functools import partial
 
 
 @partial(jit, static_argnums=(2, 3))
-def spherical_harmonic(m: jnp.float64,
-                       n: jnp.float64,
-                       x_length: jnp.float64,
-                       y_length: jnp.float64) -> jnp.array:
+def spherical_harmonic(m: jnp.float32,
+                       n: jnp.float32,
+                       x_length: jnp.float32,
+                       y_length: jnp.float32) -> jnp.array:
     """Create a spherical harmonic map with values rescaled to (0-1) range.
 
     Args:
-        m (jnp.float64): m mode
-        n (jnp.float64): n mode
-        x_length (jnp.float64): length of the x coordinates dimension
-        y_length (jnp.float64): length of the y coordinates dimension
+        m (jnp.float32): m mode
+        n (jnp.float32): n mode
+        x_length (jnp.float32): length of the x coordinates dimension
+        y_length (jnp.float32): length of the y coordinates dimension
 
     Returns:
         jnp.array: a 2D [x_length, y_length] map of (0-1) values
