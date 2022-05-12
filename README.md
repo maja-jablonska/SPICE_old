@@ -4,7 +4,7 @@ A module created for fast, differentiable spectra simulation.
 
 The main use case for now is for chemically peculiar stars with overabundances, which change the spectra during the star's rotation. We are planning to add e.g. pulsations in the future.
 
-![Example for iron overabundances](https://github.com/maja-jablonska/SpectrumIntegrator/blob/master/fe_lines.gif)
+![Example for iron overabundances](https://github.com/maja-jablonska/SpectrumIntegrator/blob/master/example_img/fe_lines.gif)
 
 The module is built with jax and flax.
 
@@ -84,7 +84,15 @@ Simulate the spectrum for rotation phase 0.:
 spectrum = si.apply(params, 0.)
 ```
 
+The result is a single spectrum array:
+
+![](https://github.com/maja-jablonska/SpectrumIntegrator/blob/master/example_img/fe_spectrum.png)
+
 Example for 20 spectra for 20 rotation phases:
 ```python
 spectra = lax.map(lambda p: si.apply(params, p), jnp.linspace(0, 2*jnp.pi, 20))
 ```
+
+This time the result is 20 spectra, one for each phase.
+
+![](https://github.com/maja-jablonska/SpectrumIntegrator/blob/master/example_img/fe_spectra.png)
