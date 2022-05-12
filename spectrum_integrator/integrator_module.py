@@ -1,8 +1,8 @@
 from typing import Callable, Tuple
 import jax.numpy as jnp
 import flax.linen as nn
-from coordinate_utils import generate_meshgrid, transform, rescale, get_integration_weights, interpolate2d_vec
-from spectrum_mlp import generate_spectrum_overabundance_params_vec
+from spectrum_integrator.coordinate_utils import generate_meshgrid, transform, rescale, get_integration_weights, interpolate2d_vec
+from spectrum_integrator.spectrum_mlp import generate_spectrum_overabundance_params_vec
 
 
 class SpectrumIntegrator(nn.Module):

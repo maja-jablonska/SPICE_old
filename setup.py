@@ -8,8 +8,5 @@ setup(
         'jax>=0.3.10',
         'flax>=0.4.2'
     ],
-    package_data = {
-        'model_weights': ['model_weights/SpectrumMLP_wave_DI.bin']
-    },
     include_package_data=True
 )

@@ -5,7 +5,8 @@ import jax.numpy as jnp
 from jax import jit, vmap, random
 import flax.linen as nn
 from flax.serialization import from_bytes
-import pkg_resources
+import spectrum_integrator.model_weights
+from importlib import resources
 
 
 c: jnp.float32 = jnp.float32(299792.458)
@@ -118,10 +119,8 @@ architecture = tuple([512, 512, 512, 1])
 model = SpectrumMLP(architecture)
 params = model.init(random.PRNGKey(0), jnp.ones(12,), jnp.ones(1,))
 
-
-with open("model_weights/SpectrumMLP_wave_DI.bin",'br') as f:
-    bin_data = f.read()
-    loaded_params = {"params":from_bytes(params["params"], bin_data)}
+bin_data = resources.read_binary(spectrum_integrator.model_weights, 'SpectrumMLP_wave_DI.bin')
+loaded_params = {"params":from_bytes(params["params"], bin_data)}
 params = loaded_params
 
 predict_spectrum = jit(vmap(
