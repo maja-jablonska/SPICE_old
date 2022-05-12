@@ -6,6 +6,7 @@ from spectrum_integrator.spectrum_mlp import generate_spectrum_overabundance_par
 
 
 class SpectrumIntegrator(nn.Module):
+    interpolation_dims: Tuple[int, int]
     meshgrid_dims: Tuple[int, int]
     
     predict_spectra_fn: Callable
@@ -25,7 +26,7 @@ class SpectrumIntegrator(nn.Module):
     @nn.compact
     def __call__(self, phi):
 
-        phiv, thetav, dtheta, dphi = generate_meshgrid(*self.meshgrid_dims)
+        phiv, thetav, dtheta, dphi = generate_meshgrid(*self.interpolation_dims)
         integration_weights = jnp.nan_to_num(get_integration_weights(phiv, dtheta, dphi)).flatten().reshape((-1, 1))
         
         trans_phi, trans_theta, rotation_map = transform(phiv,
@@ -41,7 +42,7 @@ class SpectrumIntegrator(nn.Module):
                                        trans_theta, self.meshgrid_dims)
         
         abundances = interpolate2d_vec(transformated_coords[:, 1], transformated_coords[:, 0],
-                                       self.abundance_map, *self.meshgrid_dims)
+                                       self.abundance_map, *self.interpolation_dims)
         
         integration_weights = integration_weights.flatten().reshape((-1, 1))
         rotation_map = rotation_map.flatten().reshape((-1, 1))
