@@ -15,7 +15,7 @@ class SpectrumIntegrator(nn.Module):
     inclination: jnp.float32
 
     # Stellar parameters
-    log_teff: jnp.float32
+    teff: jnp.float32
     logg: jnp.float32
     vmic: jnp.float32
     metallicity: jnp.float32
@@ -55,7 +55,7 @@ class SpectrumIntegrator(nn.Module):
         integration_weights = integration_weights.flatten().reshape((-1, 1))
         rotation_map = rotation_map.flatten().reshape((-1, 1))
         
-        spectrum_params = generate_spectrum_overabundance_params_vec(self.log_teff,
+        spectrum_params = generate_spectrum_overabundance_params_vec(self.teff,
                                                                      self.logg,
                                                                      self.vmic,
                                                                      self.metallicity,
@@ -65,3 +65,4 @@ class SpectrumIntegrator(nn.Module):
         spectra = self.predict_spectra_fn(spectrum_params, rotation_map)
         
         return jnp.sum(jnp.multiply(1-spectra, integration_weights), axis=0)/jnp.sum(integration_weights)
+        
