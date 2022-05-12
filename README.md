@@ -68,7 +68,7 @@ si: SpectrumIntegrator = SpectrumIntegrator(interpolation_dims=(50, 50),
                                             teff=jnp.float32(7469.74),
                                             logg=jnp.float32(3.95),
                                             vmic=jnp.float32(1.41),
-                                            me=jnp.float32(-0.4),
+                                            metallicity=jnp.float32(-0.4),
                                             element='Fe',
                                             abundance_map=spherical_harmonic(1, 1, 50, 50))
 ```
