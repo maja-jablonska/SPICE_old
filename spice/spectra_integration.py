@@ -31,7 +31,7 @@ def generate_spectrum_integration_function(wavelengths: jnp.array,
                                            abundance_map: jnp.array,
                                            element: str,
                                            interpolation_dims: Tuple[int, int] = (50, 50),
-                                           predict_spectrum_fn: Callable[[jnp.array, jnp.array], jnp.array] = predict_spectra) -> Callable[[jnp.float32], jnp.array]:
+                                           predict_spectra_fn: Callable[[jnp.array, jnp.array], jnp.array] = predict_spectra) -> Callable[[jnp.float32], jnp.array]:
 
     @jit
     def integrate_for_phi(phi: jnp.float32) -> jnp.array:
@@ -51,7 +51,7 @@ def generate_spectrum_integration_function(wavelengths: jnp.array,
 
         shifted_wavelengths = redshift_wavelengths_vec(wavelengths, rotation_map).reshape((-1, wavelengths.shape[-1]))
 
-        spectra = predict_spectrum_fn(spectrum_params, shifted_wavelengths)
+        spectra = predict_spectra_fn(spectrum_params, shifted_wavelengths)
         
         return jnp.sum(jnp.multiply(spectra, integration_weights), axis=0)/jnp.sum(integration_weights)
 
