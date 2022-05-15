@@ -96,3 +96,6 @@ spectra = lax.map(lambda p: si.apply(params, p), jnp.linspace(0, 2*jnp.pi, 20))
 This time the result is 20 spectra, one for each phase.
 
 ![](https://github.com/maja-jablonska/SpectrumIntegrator/blob/master/example_img/fe_spectra.png)
+
+### Authors
+Maja Jabłońska and Tomasz Różański (2022)
