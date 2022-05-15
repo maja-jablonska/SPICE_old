@@ -1,6 +1,6 @@
-# SPLINTer
+# SPICE
 
-SPLINTer (SPectrum Lightweight INTegration) is a Flax module created for fast, differentiable spectra simulation.
+SPICE (SPectrum Integration Compiled Engine) is a Flax module created for fast, differentiable spectra simulation.
 
 The main use case for now is for chemically peculiar stars with overabundances, which change the spectra during the star's rotation. We are planning to add e.g. pulsations in the future.
 
