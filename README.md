@@ -8,6 +8,14 @@ The main use case for now is for chemically peculiar stars with overabundances, 
 
 The module is built with jax and flax.
 
+## Installation
+
+The package can be installed with pip:
+
+```bash
+pip install git+https://github.com/maja-jablonska/SPICE
+```
+
 ## Usage
 
 ### generate_spectrum_integration_function
@@ -67,7 +75,7 @@ Then generate the spectrum integration function. We are going to model the spect
 ```python
 fn = generate_spectrum_integration_function(interpolation_dims=(50, 50),
                                             wavelengths=wavelengths,
-                                            predict_spectrum_fn=predict_spectra,
+                                            predict_spectra_fn=predict_spectra,
                                             rotation=jnp.float32(45.),
                                             inclination=jnp.pi/2,
                                             teff=jnp.float32(7469.74),
