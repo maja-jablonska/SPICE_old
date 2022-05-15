@@ -5,7 +5,7 @@ import jax.numpy as jnp
 from jax import jit, vmap, random
 import flax.linen as nn
 from flax.serialization import from_bytes
-import spectrum_integrator.model_weights
+import spice.model_weights
 from importlib import resources
 
 
@@ -129,7 +129,7 @@ architecture = tuple([512, 512, 512, 1])
 model = SpectrumMLP(architecture)
 params = model.init(random.PRNGKey(0), jnp.ones(12,), jnp.ones(1,))
 
-bin_data = resources.read_binary(spectrum_integrator.model_weights, 'SpectrumMLP_wave_DI.bin')
+bin_data = resources.read_binary(spice.model_weights, 'SpectrumMLP_wave_DI.bin')
 loaded_params = {"params":from_bytes(params["params"], bin_data)}
 params = loaded_params
 
@@ -139,44 +139,38 @@ predict_spectrum = jit(vmap(
                                     )
                           )
 
-predict_spectra = jit(vmap(predict_spectrum, in_axes=(0, None), out_axes=0))
+predict_spectra_for_log_wavelengths = jit(vmap(predict_spectrum, in_axes=(0, None), out_axes=0))
 
-def predict_spectrum_with_rot_velocity(params: jnp.array,
-                                       log_wave: jnp.array,
-                                       rot_vel: jnp.float32) -> jnp.array:
-    """Calculate spectrum applying the velocity transformation.
+# def predict_spectrum_with_rot_velocity(params: jnp.array,
+#                                        log_wave: jnp.array,
+#                                        rot_vel: jnp.float32) -> jnp.array:
+#     """Calculate spectrum applying the velocity transformation.
+
+#     Args:
+#         params (jnp.array): parameters of (log_teff, logg, vmic, metallicity, a_Mn, a_Fe,
+#                 a_Si, a_Ca, a_C, a_N, a_O, a_Hg)
+#         log_wave (jnp.array): logarithms of wavelengths in angstroms [3.77085, 3.79934]
+#         rot_vel (jnp.float32): velocity in km/s
+
+#     Returns:
+#         jnp.array: spectrum fluxes redshifted/blueshifted according to the rotational velocity
+#     """
+#     return predict_spectrum(params, log_wave+jnp.log10(1+rot_vel/c))
+
+# predict_spectra_with_rot_velocity = jit(vmap(predict_spectrum_with_rot_velocity, in_axes=(0, None, 0)))
+
+@jit
+def predict_spectra(parameters: jnp.array, wavelengths: jnp.array) -> Callable[[jnp.array, jnp.array], jnp.array]:
+    """Calculate spectrum fluxes for given spectra parameters and wavelengths
 
     Args:
-        params (jnp.array): parameters of (log_teff, logg, vmic, metallicity, a_Mn, a_Fe,
-                a_Si, a_Ca, a_C, a_N, a_O, a_Hg)
-        log_wave (jnp.array): logarithms of wavelengths in angstroms [3.77085, 3.79934]
-        rot_vel (jnp.float32): velocity in km/s
+        parameters: jnp.array = array of stellar parameters sets
+        wavelengths: jnp.array = array of wavelengths to calculate flux for in angstroms
 
     Returns:
-        jnp.array: spectrum fluxes redshifted/blueshifted according to the rotational velocity
+        jnp.array = array of fluxes
     """
-    return predict_spectrum(params, log_wave+jnp.log10(1+rot_vel/c))
-
-predict_spectra_with_rot_velocity = jit(vmap(predict_spectrum_with_rot_velocity, in_axes=(0, None, 0)))
-
-def spectra_prediction_function(wave_min: jnp.float32,
-                                wave_max: jnp.float32,
-                                wave_points: jnp.float32) -> Callable[[jnp.array, jnp.array], jnp.array]:
-    """Generate a spectrum prediction function for the given wavelength range.
-
-    Args:
-        wave_min (jnp.float32): minimum wavelength in angstroms
-        wave_max (jnp.float32): maximum wavelength in angstroms
-        wave_points (jnp.float32): number of points in the wavelength range
-
-    Returns:
-        Callable[[jnp.array, jnp.array], jnp.array]: function taking array of parameters and array of rotations (for points on the stellar disk) and returning corresponding
-        spectrum fluxes
-    """
-    log_wave = jnp.linspace(jnp.log10(wave_min), jnp.log10(wave_max), wave_points)
+    log_wave = jnp.log10(wavelengths)
     
-    @jit
-    def predict_spectra(parameters: jnp.array, rotation_map: jnp.array) -> jnp.array:
-        return (1-predict_spectra_with_rot_velocity(parameters, log_wave, rotation_map)).reshape((-1, wave_points))
-    
-    return predict_spectra
+    return (1-predict_spectra_for_log_wavelengths(parameters, log_wave)).reshape((-1, len(log_wave)))
+
