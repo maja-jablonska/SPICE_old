@@ -1,5 +1,5 @@
 from operator import indexOf
-from typing import Callable, List, Sequence
+from typing import List, Sequence
 from functools import partial
 import jax.numpy as jnp
 from jax import jit, vmap, random
@@ -110,7 +110,7 @@ class SpectrumMLP(nn.Module):
         """Calculate flux at given log wavelength for given stellar parameters and abundances.
 
         Args:
-            parameters (jnp.array): parameters of (log_teff, logg, vmic, metallicity, a_Mn, a_Fe,
+            parameters (jnp.array): array parameters of (log_teff, logg, vmic, metallicity, a_Mn, a_Fe,
                 a_Si, a_Ca, a_C, a_N, a_O, a_Hg)
             log_wave (jnp.float32): logarithm of wavelength in angstroms [3.77085, 3.79934]
 
@@ -133,44 +133,26 @@ bin_data = resources.read_binary(spice.model_weights, 'SpectrumMLP_wave_DI.bin')
 loaded_params = {"params":from_bytes(params["params"], bin_data)}
 params = loaded_params
 
-predict_spectrum = jit(vmap(
-    lambda spectrum_parameters, log_wavelengths : model.apply(params, spectrum_parameters, log_wavelengths), 
-             in_axes=(None, 0), out_axes=0
-                                    )
-                          )
+__predict_spectrum = jit(vmap(lambda spectrum_parameters, log_wavelengths : model.apply(params, spectrum_parameters, log_wavelengths), in_axes=(None, 0), out_axes=0))
 
-predict_spectra_for_log_wavelengths = jit(vmap(predict_spectrum, in_axes=(0, None), out_axes=0))
-
-# def predict_spectrum_with_rot_velocity(params: jnp.array,
-#                                        log_wave: jnp.array,
-#                                        rot_vel: jnp.float32) -> jnp.array:
-#     """Calculate spectrum applying the velocity transformation.
-
-#     Args:
-#         params (jnp.array): parameters of (log_teff, logg, vmic, metallicity, a_Mn, a_Fe,
-#                 a_Si, a_Ca, a_C, a_N, a_O, a_Hg)
-#         log_wave (jnp.array): logarithms of wavelengths in angstroms [3.77085, 3.79934]
-#         rot_vel (jnp.float32): velocity in km/s
-
-#     Returns:
-#         jnp.array: spectrum fluxes redshifted/blueshifted according to the rotational velocity
-#     """
-#     return predict_spectrum(params, log_wave+jnp.log10(1+rot_vel/c))
-
-# predict_spectra_with_rot_velocity = jit(vmap(predict_spectrum_with_rot_velocity, in_axes=(0, None, 0)))
-
-@jit
-def predict_spectra(parameters: jnp.array, wavelengths: jnp.array) -> Callable[[jnp.array, jnp.array], jnp.array]:
-    """Calculate spectrum fluxes for given spectra parameters and wavelengths
+def predict_spectrum(spectrum_parameters: jnp.array, wavelengths: jnp.array) -> jnp.array:
+    """Calculate spectrum fluxes for given spectrum parameters and wavelengths
 
     Args:
-        parameters: jnp.array = array of stellar parameters sets
-        wavelengths: jnp.array = array of wavelengths to calculate flux for in angstroms
+        spectrum_parameters (jnp.array): 1d array of parameters (log_teff, logg, vmic, metallicity, a_Mn, a_Fe,
+                a_Si, a_Ca, a_C, a_N, a_O, a_Hg)
+        wavelengths (jnp.array): 1d array of wavelengths in angstroms
 
     Returns:
-        jnp.array = array of fluxes
+        jnp.array: 1d array of fluxes
     """
-    log_wave = jnp.log10(wavelengths)
-    
-    return (1-predict_spectra_for_log_wavelengths(parameters, log_wave)).reshape((-1, len(log_wave)))
+    return __predict_spectrum(spectrum_parameters, jnp.log10(wavelengths)).flatten()
 
+predict_spectra = jit(vmap(predict_spectrum, in_axes=(0, 0)))
+
+c: jnp.float32 = jnp.float32(299792.458)
+
+def redshift_wavelengths(wavelengths: jnp.array, radial_velocity: jnp.float32) -> jnp.array:
+    return wavelengths*(1+radial_velocity/c)
+
+redshift_wavelengths_vec = jit(vmap(redshift_wavelengths, in_axes=(None, 0), out_axes=0))

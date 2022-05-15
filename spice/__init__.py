@@ -1,3 +1,3 @@
-from spice.spectrum_mlp import predict_spectra
+from spice.spectra import predict_spectrum, predict_spectra
 from spice.spherical_harmonics import spherical_harmonic
-from spice.integrator_module import SpectrumIntegrator
+from spice.spectra_integration import generate_spectrum_integration_function

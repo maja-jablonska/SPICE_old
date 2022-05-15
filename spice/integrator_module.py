@@ -1,15 +1,17 @@
 from typing import Callable, Tuple
+from jax import jit, vmap
 import jax.numpy as jnp
 import flax.linen as nn
 from spice.coordinate_utils import generate_meshgrid, transform, rescale, get_integration_weights, interpolate2d_vec
-from spice.spectrum_mlp import generate_spectrum_overabundance_params_vec
+from spice.spectra import generate_spectrum_overabundance_params_vec
 
 
 class SpectrumIntegrator(nn.Module):
     interpolation_dims: Tuple[int, int]
     meshgrid_dims: Tuple[int, int]
     
-    predict_spectra_fn: Callable[[jnp.array, jnp.array], jnp.array]
+    predict_spectrum_fn: Callable[[jnp.array, jnp.array], jnp.array]
+    wavelengths: jnp.array
 
     rotation: jnp.float32
     inclination: jnp.float32
@@ -62,7 +64,8 @@ class SpectrumIntegrator(nn.Module):
                                                                      abundances,
                                                                      self.element)
 
-        spectra = self.predict_spectra_fn(spectrum_params, rotation_map)
+        shifted_wavelengths = redshift_wavelengths_vec(self.wavelengths, rotation_map).reshape((-1, self.wavelengths.shape[-1]))
+
+        spectra = self.predict_spectrum_fn(spectrum_params, shifted_wavelengths)
         
-        return jnp.sum(jnp.multiply(1-spectra, integration_weights), axis=0)/jnp.sum(integration_weights)
-        
+        return jnp.sum(jnp.multiply(spectra, integration_weights), axis=0)/jnp.sum(integration_weights)
