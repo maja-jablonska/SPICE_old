@@ -100,4 +100,4 @@ This time the result is 20 spectra, one for each phase.
 ### Authors and citations
 Maja Jabłońska and Tomasz Różański (2022)
 
-SPLINTer is built on top of JAX (https://github.com/google/jax) and Flax (https://github.com/google/flax)
+SPICE is built on top of JAX (https://github.com/google/jax) and Flax (https://github.com/google/flax)
