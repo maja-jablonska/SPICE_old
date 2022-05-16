@@ -63,7 +63,7 @@ Many abundance maps can also be described by a spherical harmonic function. To g
 To use the SpectrumIntegrator, provide a spectra model first - this can of course be the product of spectra_prediction_function. (You can write your custom one, though!)
 
 ```python
-from spice import predict_spectra, spherical_harmonic, generate_spectrum_integration_function
+from spice import predict_spectra, spherical_harmonic, generate_spectrum_integration_function, 
 import jax.numpy as jnp
 from jax import lax
 
@@ -104,6 +104,32 @@ spectra = lax.map(lambda p: fn(p), jnp.linspace(0, 2*jnp.pi, 20))
 This time the result is 20 spectra, one for each phase.
 
 ![](https://github.com/maja-jablonska/SPICE/blob/master/example_img/fe_spectra.png)
+
+You can also plot a spectrum for a given rotational phase. This is done in a similiar way to the spectrum generation function:
+
+```python
+plot_fn = generate_plot_function_for_phi(interpolation_dims=(100, 100),
+                                          wavelengths=wavelengths,
+                                          predict_spectra_fn=predict_spectra,
+                                          rotation_velocity=jnp.float32(45.),
+                                          inclination=jnp.pi/2,
+                                          teff=jnp.float32(7469.74),
+                                          logg=jnp.float32(3.95),
+                                          vmic=jnp.float32(1.41),
+                                          metallicity=jnp.float32(-0.4),
+                                          element='Fe',
+                                          abundance_map=spherical_harmonic(1, 1, 256, 128))
+```
+
+and plot for $\phi=0.$:
+
+```python
+plot_fn(0.)
+```
+
+which results in:
+
+![](https://github.com/maja-jablonska/SPICE/blob/master/example_img/spectrum_plot.png)
 
 ### Authors and citations
 Maja Jabłońska and Tomasz Różański (2022)
