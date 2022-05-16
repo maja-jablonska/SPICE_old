@@ -8,6 +8,14 @@ The main use case for now is for chemically peculiar stars with overabundances, 
 
 The module is built with jax and flax.
 
+## Installation
+
+The package can be installed with pip:
+
+```bash
+pip install git+https://github.com/maja-jablonska/SPICE
+```
+
 ## Usage
 
 ### generate_spectrum_integration_function
@@ -67,7 +75,7 @@ Then generate the spectrum integration function. We are going to model the spect
 ```python
 fn = generate_spectrum_integration_function(interpolation_dims=(50, 50),
                                             wavelengths=wavelengths,
-                                            predict_spectrum_fn=predict_spectra,
+                                            predict_spectra_fn=predict_spectra,
                                             rotation=jnp.float32(45.),
                                             inclination=jnp.pi/2,
                                             teff=jnp.float32(7469.74),
@@ -86,7 +94,7 @@ spectrum = fn(jnp.pi)
 
 The result is a single spectrum array:
 
-![](https://github.com/maja-jablonska/SpectrumIntegrator/blob/master/example_img/fe_spectrum.png)
+![](https://github.com/maja-jablonska/SPICE/blob/master/example_img/fe_spectrum.png)
 
 Example for 20 spectra for 20 rotation phases:
 ```python
@@ -95,7 +103,7 @@ spectra = lax.map(lambda p: fn(p), jnp.linspace(0, 2*jnp.pi, 20))
 
 This time the result is 20 spectra, one for each phase.
 
-![](https://github.com/maja-jablonska/SpectrumIntegrator/blob/master/example_img/fe_spectra.png)
+![](https://github.com/maja-jablonska/SPICE/blob/master/example_img/fe_spectra.png)
 
 ### Authors and citations
 Maja Jabłońska and Tomasz Różański (2022)
