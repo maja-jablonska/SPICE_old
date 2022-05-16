@@ -63,7 +63,7 @@ Many abundance maps can also be described by a spherical harmonic function. To g
 To use the SpectrumIntegrator, provide a spectra model first - this can of course be the product of spectra_prediction_function. (You can write your custom one, though!)
 
 ```python
-from spice import predict_spectra, spherical_harmonic, generate_spectrum_integration_function, 
+from spice import predict_spectra, spherical_harmonic, generate_spectrum_integration_function, generate_plot_function_for_phi
 import jax.numpy as jnp
 from jax import lax
 
