@@ -22,7 +22,7 @@ def generate_transformed_geometry(phi: jnp.float32,
     return integration_weights, rotation_map, transformated_coords
 
 def generate_spectrum_integration_function(wavelengths: jnp.array,
-                                           rotation: jnp.float32,
+                                           rotation_velocity: jnp.float32,
                                            inclination: jnp.float32,
                                            teff: jnp.float32,
                                            logg: jnp.float32,
@@ -32,12 +32,31 @@ def generate_spectrum_integration_function(wavelengths: jnp.array,
                                            element: str,
                                            interpolation_dims: Tuple[int, int] = (50, 50),
                                            predict_spectra_fn: Callable[[jnp.array, jnp.array], jnp.array] = predict_spectra) -> Callable[[jnp.float32], jnp.array]:
+    """Generate a function that outputs spectrum fluxes for given rotation phase phi, assuming stellar parameters, abundance map and desired wavelengths range
+
+    Args:
+        wavelengths (jnp.array): spectrum fluxes wavelengths range (in angstroms)
+        rotation_velocity (jnp.float32): rotation velocity in km/s
+        inclination (jnp.float32): inclination in [0, pi]
+        teff (jnp.float32): effective temperature in K
+        logg (jnp.float32): log g
+        vmic (jnp.float32): microturbulence velocity in km/s
+        metallicity (jnp.float32): metallicity in log format
+        abundance_map (jnp.array): a matrix representing an element's abundances
+        element (str): element that exhibits non-homogenous distribution across stellar disk
+        interpolation_dims (Tuple[int, int], optional): number of points to sample the abundances at. Defaults to (50, 50).
+        predict_spectra_fn (Callable[[jnp.array, jnp.array], jnp.array], optional): function calculating spectrum fluxes for given stellar parameters
+            and wavelengths. Defaults to predict_spectra.
+
+    Returns:
+        Callable[[jnp.float32], jnp.array]: Function that outputs spectrum fluxes for given rotation phase phi.
+    """
 
     @jit
     def integrate_for_phi(phi: jnp.float32) -> jnp.array:
 
         integration_weights, rotation_map, transformated_coords = generate_transformed_geometry(phi=phi,
-                                                                                                rotation=rotation,
+                                                                                                rotation=rotation_velocity,
                                                                                                 inclination=inclination,
                                                                                                 interpolation_dims=interpolation_dims,
                                                                                                 abundance_map=abundance_map)
