@@ -1,3 +1,3 @@
 from spice.spectra import predict_spectrum, predict_spectra
 from spice.spherical_harmonics import spherical_harmonic
-from spice.spectra_integration import generate_spectrum_integration_function
+from spice.spectra_integration import generate_spectrum_integration_function, generate_plot_function_for_phi

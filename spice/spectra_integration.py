@@ -152,4 +152,6 @@ def generate_plot_function_for_phi(wavelengths: jnp.array,
         ax2.grid(linestyle='--')
         ax2.set_xlabel('Wavelength [$\AA$]')
 
+        fig.patch.set_facecolor('white')
+
     return plot_for_phi
